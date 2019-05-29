@@ -15,7 +15,8 @@
 // Component headers
 #include "CPU.hpp"
 
-// Unit Test header
+// Unit Test headers
+//#include "TestEmulator.hpp"
 #include "catch2/catch.hpp"
 
 class Emulator {
@@ -23,8 +24,10 @@ public:
   Emulator( const std::string & ROM_filename,  
             const uint8_t & debug_flag,        // Will set flag to output debug info
             const uint8_t & unit_test_flag);   // Will set flag for running all written unit tests
-                      
-private:
+
+  void loop();  // Main emulation loop
+
+ private:
   // Flags
   uint8_t debug_flag_;
   uint8_t unit_test_flag_;

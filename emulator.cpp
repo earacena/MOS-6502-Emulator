@@ -16,6 +16,10 @@ Emulator::Emulator( const std::string & ROM_filename, const uint8_t & debug_flag
   unit_test_flag_ = unit_test_flag;
 
   // Initialize components
-  cpu_.initialize();
+  //  cpu_.initialize();
   
+}
+
+void Emulator::loop() {
+  //  cpu_.emulate();
 }
