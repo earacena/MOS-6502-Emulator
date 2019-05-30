@@ -6,7 +6,7 @@
  * Description:             Emulator implementation.
  */
 
-#include "Emulator.hpp"
+#include "emulator.hpp"
 
 Emulator::Emulator( const std::string & ROM_filename, const uint8_t & debug_flag,
                     const uint8_t & unit_test_flag) {

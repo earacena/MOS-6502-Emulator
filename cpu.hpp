@@ -2,7 +2,7 @@
  * Author:                  Emanuel Aracena
  * Date:                    May 27, 2019
  * Project (working) title: NES Emulator
- * Filename:                CPU.hpp
+ * Filename:                cpu.hpp
  * Description:             CPU interface.
  *                          **The MOS 6502 is a little-endian 8-bit processor.**
  */
@@ -23,12 +23,12 @@ class CPU {
   void powerup();              // power-up state
 
   // CPU emulation
-  void emulate();              // fetch, decode, execute
+  void emulate();              // single fetch, decode, execute loop
+
+ private:
   void emulate_cycle_timing(); // Attempt to accurately emulate cycle timings (513~ ns per CPU cycle)
   void fetch();                // fetch next instruction, update program counter
   void decode_execute();       // Look for opcode function, execute
-  
- private:
   
   // Memory, 0000-FFFF map
   // RANGE       |  SIZE  |  Device
@@ -49,14 +49,23 @@ class CPU {
   uint8_t  Y_;   // Register Y
   uint16_t PC_;  // Program counter
   uint8_t  SP_;  // Stack pointer, hardcoded to work in range $0100-01FF
-  uint8_t  P_;   // Status register
+  uint8_t  P_;   // Status register, MSB-LSB : NVssDIZC
+                 //    C : Carry
+                 //    Z : Zero
+                 //    I : Interrupt Disable
+                 //    D : Decimal
+                 //    s : no CPU effect, B flag
+                 //    V : Overflow
+                 //    N : Negative
+  
 
   // Cycle timings
   std::chrono::nanoseconds cycle_time_;
   uint8_t cycles_to_emulate_;
+  std::chrono::nanoseconds time_to_emulate_;
   std::chrono::nanoseconds elapsed_exec_time_;
-  std::chrono::high_resolution_clock::time_point exec_start_time_;
-  std::chrono::high_resolution_clock::time_point exec_end_time_;
+  std::chrono::steady_clock::time_point exec_start_time_;
+  std::chrono::steady_clock::time_point exec_end_time_;
 
   // Opcode
   uint16_t opcode_;
@@ -67,10 +76,9 @@ class CPU {
   std::vector<std::function<void()>> opcode_table_;
 
   // Opcode implementations
-  // Addressing modes (post-fixes):
+  // Addressing modes :
   // Ex: op_OPCODEHEX_OPNAME_POSTFIX_
   //   implied          -> none
-  //   accumalator      -> acc
   //   immediate        -> imm
   //   zero page        -> zp
   //   zero page, x     -> zpx
@@ -83,7 +91,15 @@ class CPU {
   //   indirect         -> ind
   //   relative         -> rel
 
-  void op_00_BRK_();
+  
+  void op_00_BRK_();       // 00      - BRK - none - Force Interrupt
+  void op_01_ORA_izx_();   // 01      - ORA - izx  - Logical Inclusive OR
+  void op_NOP_();          // various - NOP - none - Do nothing
+  void op_05_ORA_zp_();    // 05      - ORA - zp   - Logical Inclusive OR
+  void op_06_ASL_zp_();    // 06      - ASL - zp   - Arithmetic Shift Left
+  void op_08_PHP_();       // 08      - PHP - none - Push Processor Status
+  void op_09_ORA_imm_();   // 09      - ORA - imm  - Logical Inclusive OR
+  void op_0A_ASL_();       // 0A      - ASL - none - Arithmetic Shift Left
 };
 
 #endif // CPU_HPP

@@ -2,7 +2,7 @@
  * Author:                  Emanuel Aracena
  * Date:                    May 27, 2019
  * Project (working) title: NES Emulator
- * Filename:                Emulator.hpp
+ * Filename:                emulator.hpp
  * Description:             Emulator interface.
  */
 
@@ -13,7 +13,7 @@
 #include <string>
 
 // Component headers
-#include "CPU.hpp"
+#include "cpu.hpp"
 
 // Unit Test headers
 //#include "TestEmulator.hpp"

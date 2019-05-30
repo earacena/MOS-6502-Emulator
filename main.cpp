@@ -6,7 +6,7 @@
  * Description:
  */
 
-#include "Emulator.hpp"
+#include "emulator.hpp"
 
 int main(int argc, char** argv)
 {
@@ -23,7 +23,8 @@ int main(int argc, char** argv)
 
   Emulator emulator( ROM_filename, debug_flag, unit_test_flag );
 
-  emulator.execute();
+  // Main emulator execution loop
+  emulator.loop();
   
   return 0;
 }
