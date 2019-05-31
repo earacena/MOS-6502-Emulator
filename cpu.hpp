@@ -27,8 +27,8 @@ class CPU {
 
  private:
   void emulate_cycle_timing(); // Attempt to accurately emulate cycle timings (513~ ns per CPU cycle)
-  void fetch();                // fetch next instruction, update program counter
-  void decode_execute();       // Look for opcode function, execute
+  void fetch();                // fetch next instruction
+  void decode_execute();       // Look for opcode function, execute, update program counter
   
   // Memory, 0000-FFFF map
   // RANGE       |  SIZE  |  Device
@@ -92,14 +92,25 @@ class CPU {
   //   relative         -> rel
 
   
-  void op_00_BRK_();       // 00      - BRK - none - Force Interrupt
-  void op_01_ORA_izx_();   // 01      - ORA - izx  - Logical Inclusive OR
-  void op_NOP_();          // various - NOP - none - Do nothing
-  void op_05_ORA_zp_();    // 05      - ORA - zp   - Logical Inclusive OR
-  void op_06_ASL_zp_();    // 06      - ASL - zp   - Arithmetic Shift Left
-  void op_08_PHP_();       // 08      - PHP - none - Push Processor Status
-  void op_09_ORA_imm_();   // 09      - ORA - imm  - Logical Inclusive OR
-  void op_0A_ASL_();       // 0A      - ASL - none - Arithmetic Shift Left
+  void op_00_BRK_();                   // 00      - BRK - none - Force Interrupt
+  void op_01_ORA_izx_();               // 01      - ORA - izx  - Logical Inclusive OR
+  void op_NOP_(uint8_t num_of_cycles,
+               uint8_t pc_offset);     // various - NOP - none - Do nothing
+  void op_03_SLO_izx_();               // 03      - SLO - izx  - Shift Left then OR
+  void op_05_ORA_zp_();                // 05      - ORA - zp   - Logical Inclusive OR
+  void op_06_ASL_zp_();                // 06      - ASL - zp   - Arithmetic Shift Left
+  void op_07_SLO_zp_();                // 07      - SLO - zp   - Shift Left then OR
+  void op_08_PHP_();                   // 08      - PHP - none - Push Processor Status
+  void op_09_ORA_imm_();               // 09      - ORA - imm  - Logical Inclusive OR
+  void op_0A_ASL_();                   // 0A      - ASL - none - Arithmetic Shift Left
+  void op_0B_ANC_imm_();               // 0B      - ANC - imm  - AND A and immediate
+  void op_0D_ORA_abs_();               // 0D      - ORA - abs  - Logical Inclusive OR
+  void op_0E_ASL_abs_();               // 0E      - ASL - abs  - Arithmetic Shift Left
+  void op_0F_SLO_abs_();               // 0F      - SLO - abs  - Shift Left then OR
+  void op_10_BPL_rel_();               // 10      - BPL - rel  - Branch if Positive
+  void op_11_ORA_izy_();               // 11      - ORA - izy  - Logical Inclusive OR
+  void op_13_SLO_izy_();               // 13      - SLO - izy  - Shift left then OR
+  void op_15_ORA_zpx_();               // 15      - ORA - zpx  - Logical Inclusive OR
 };
 
 #endif // CPU_HPP
