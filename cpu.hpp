@@ -50,12 +50,13 @@ class CPU {
   uint8_t  Y_;   // Register Y
   uint16_t PC_;  // Program counter
   uint8_t  SP_;  // Stack pointer, hardcoded to work in range $0100-01FF
-  uint8_t  P_;   // Status register, MSB-LSB : NVssDIZC
+  uint8_t  P_;   // Status register, MSB-LSB : NV(1)BDIZC
                  //    C : Carry
                  //    Z : Zero
                  //    I : Interrupt Disable
                  //    D : Decimal
-                 //    s : no CPU effect, B flag
+                 //    B : B flag
+                 //    1 : no effect, always one
                  //    V : Overflow
                  //    N : Negative
   
@@ -68,19 +69,17 @@ class CPU {
   std::chrono::steady_clock::time_point exec_start_time_;
   std::chrono::steady_clock::time_point exec_end_time_;
 
+  
+  
   // Opcode
   uint16_t opcode_;
-
-  // Opcode table, implemented in sequential order for simplicity of
-  // function lookup with byte hex offset,
-  // 256 total (official) opcode entries
-  //std::vector<std::function<void()>> opcode_table_;
-
   std::unordered_map<uint8_t, std::function<void()>> addr_modes_;
   std::unordered_map<uint8_t, std::function<void()>> opcode_table_;
   std::string current_addr_mode_;
-  uint16_t target_address_;
-  
+  uint16_t target_addr_;
+  uint8_t pc_offset_;
+  uint8_t immediate_;
+
   // Opcode implementations
   // Addressing modes :
   // Ex: op_OPCODEHEX_OPNAME_POSTFIX_
@@ -102,50 +101,94 @@ class CPU {
   void addr_zero_page_x_();
   void addr_zero_page_y_();
   void addr_izx_();
-  void addr_ixy_();
+  void addr_izy_();
   void addr_absolute_();
   void addr_absolute_x_();
   void addr_absolute_y_();
   void addr_indirect_();
   void addr_relative_();
 
+  // Official opcodes
+  void op_ADC_();
+  void op_AND_();
+  void op_ASL_();
+  void op_BCC_();
+  void op_BCS_();
+  void op_BEQ_();
+  void op_BIT_();
+  void op_BMI_();
+  void op_BNE_();
+  void op_BPL_();
+  void op_BRK_();
+  void op_BVC_();
+  void op_BVS_();
+  void op_CLC_();
+  void op_CLD_();
+  void op_CLI_();
+  void op_CLV_();
+  void op_CMP_();
+  void op_CPX_();
+  void op_CPY_();
+  void op_DEC_();
+  void op_DEX_();
+  void op_DEY_();
+  void op_EOR_();
+  void op_INC_();
+  void op_INX_();
+  void op_INY_();
+  void op_JMP_();
+  void op_JSR_();
+  void op_LDA_();
+  void op_LDX_();
+  void op_LDY_();
+  void op_LSR_();
+  void op_NOP_();
+  void op_ORA_();
+  void op_PHA_();
+  void op_PHP_();
+  void op_PLA_();
+  void op_PLP_();
+  void op_ROL_();
+  void op_ROR_();
+  void op_RTI_();
+  void op_RTS_();
+  void op_SBC_();
+  void op_SEC_();
+  void op_SED_();
+  void op_SEI_();
+  void op_STA_();
+  void op_STX_();
+  void op_STY_();
+  void op_TAX_();
+  void op_TAY_();
+  void op_TSX_();
+  void op_TXA_();
+  void op_TXS_();
+  void op_TYA_();
 
+  // Unofficial opcodes
+  void op_SLO_();
+  void op_RLA_();
+  void op_SRE_();
+  void op_RRA_();
+  void op_SAX_();
+  void op_LAX_();
+  void op_DCP_();
+  void op_ISC_();
+  void op_ANC_();
+  void op_ALR_();
+  void op_ARR_();
+  void op_XAA_();
+  void op_AXS_();
+  void op_AHX_();
+  void op_SHY_();
+  void op_SHX_();
+  void op_TAS_();
+  void op_LAS_();
 
+  // Special opcodes
+  void op_KIL_();
 
-  
-  // void op_00_BRK_();                   // 00 - BRK - none - Force Interrupt
-  // void op_01_ORA_izx_();               // 01 - ORA - izx  - Logical Inclusive OR
-  // void op_NOP_(uint8_t num_of_cycles,
-  //              uint8_t pc_offset);     // ~  - NOP - none - Do nothing
-  // void op_03_SLO_izx_();               // 03 - SLO - izx  - Shift Left then OR
-  // void op_05_ORA_zp_();                // 05 - ORA - zp   - Logical Inclusive OR
-  // void op_06_ASL_zp_();                // 06 - ASL - zp   - Arithmetic Shift Left
-  // void op_07_SLO_zp_();                // 07 - SLO - zp   - Shift Left then OR
-  // void op_08_PHP_();                   // 08 - PHP - none - Push Processor Status
-  // void op_09_ORA_imm_();               // 09 - ORA - imm  - Logical Inclusive OR
-  // void op_0A_ASL_();                   // 0A - ASL - none - Arithmetic Shift Left
-  // void op_0B_ANC_imm_();               // 0B - ANC - imm  - AND A and immediate
-  // void op_0D_ORA_abs_();               // 0D - ORA - abs  - Logical Inclusive OR
-  // void op_0E_ASL_abs_();               // 0E - ASL - abs  - Arithmetic Shift Left
-  // void op_0F_SLO_abs_();               // 0F - SLO - abs  - Shift Left then OR
-  // void op_10_BPL_rel_();               // 10 - BPL - rel  - Branch if Positive
-  // void op_11_ORA_izy_();               // 11 - ORA - izy  - Logical Inclusive OR
-  // void op_13_SLO_izy_();               // 13 - SLO - izy  - Shift left then OR
-  // void op_15_ORA_zpx_();               // 15 - ORA - zpx  - Logical Inclusive OR
-  // void op_16_ASL_zpx_();               // 16 - ASL - zpx  - Arithmetic Shift Left
-  // void op_17_SLO_zpx_();               // 17 - SLO - zpx  - Shift left then OR
-  // void op_18_CLC_();                   // 18 - CLC - none - Clear Carry Flag
-  // void op_19_ORA_aby_();               // 19 - ORA - aby  - Logical Inclusive OR
-  // void op_1B_SLO_aby_();               // 1B - SLO - aby  - Shift left then OR
-  // void op_1D_ORA_abx_();               // 1D - ORA - abx  - Logical Inclusive OR
-  // void op_1E_ASL_abx_();               // 1E - ASL - abx  - Arithmetic Shift Left
-  // void op_1F_SLO_abx_();               // 1F - SLO - abx  - Shift left then OR
-  // void op_20_JSR_abs_();               // 20 - JSR - abs  - Jump to subroutine
-  // void op_21_AND_izx_();               // 21 - AND - izx  - Logical AND  
-  // void op_23_RLA_izx_();               // 23 - RLA - izx  - Rotate Left then AND
-  // void op_24_BIT_zp_();                // 24 - BIT - zp   - Bit Test
-  // void op_25_AND_zp_();                // 25 - AND - zp   - Logical AND
-  // void op_26_ROL_zp_();                // 26 - ROT - zp   - Rotate Left
 };
 
 #endif // CPU_HPP
