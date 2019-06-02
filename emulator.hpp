@@ -1,7 +1,7 @@
 /*
  * Author:                  Emanuel Aracena
  * Date:                    May 27, 2019
- * Project (working) title: NES Emulator
+ * Project (working) title: MOS 6502 Emulator
  * Filename:                emulator.hpp
  * Description:             Emulator interface.
  */
@@ -15,13 +15,9 @@
 // Component headers
 #include "cpu.hpp"
 
-// Unit Test headers
-//#include "TestEmulator.hpp"
-#include "catch2/catch.hpp"
-
 class Emulator {
 public:
-  Emulator( const std::string & ROM_filename,  
+  Emulator( const std::string & filename,  
             const uint8_t & debug_flag,        // Will set flag to output debug info
             const uint8_t & unit_test_flag);   // Will set flag for running all written unit tests
 

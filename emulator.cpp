@@ -1,14 +1,14 @@
 /* 
  * Author:                  Emanuel Aracena
  * Date:                    May 27, 2019
- * Project (working) title: NES Emulator
+ * Project (working) title: MOS 6502 Emulator
  * Filename:                Emulator.cpp
  * Description:             Emulator implementation.
  */
 
 #include "emulator.hpp"
 
-Emulator::Emulator( const std::string & ROM_filename, const uint8_t & debug_flag,
+Emulator::Emulator( const std::string & filename, const uint8_t & debug_flag,
                     const uint8_t & unit_test_flag) {
 
   // Set flags

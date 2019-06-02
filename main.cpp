@@ -1,27 +1,29 @@
 /*
  * Author:                  Emanuel Aracena
  * Date created:            May 27, 2019
- * Project (working) title: NES Emulator
+ * Project (working) title: MOS 6502 Emulator
  * Filename:                main.cpp
  * Description:
  */
+
+#include <iostream>
 
 #include "emulator.hpp"
 
 int main(int argc, char** argv)
 {
-  // if (argc < 2) {
-  //   std::cout << "Usage: nes-emu </path/to/ROM> <flags>" << std::endl;
-  //   std::cout << "Available flags/options:" << std::endl;
-  //   std::cout << "\t--debug\t\tOutput debug information and run unit tests." << std::endl;
-  //   return 0;
-  // }
+  if (argc < 2) {
+    std::cout << "Usage: 6502-emu </path/to/file> <flags>" << std::endl;
+    std::cout << "Available flags/options:" << std::endl;
+    std::cout << "\t--debug\t\tOutput debug information and run unit tests." << std::endl;
+    return 0;
+  }
 
-  const std::string ROM_filename(argv[1]);  
+  const std::string filename(argv[1]);  
   uint8_t debug_flag = 1;
   uint8_t unit_test_flag = 1;
 
-  Emulator emulator( ROM_filename, debug_flag, unit_test_flag );
+  Emulator emulator( filename, debug_flag, unit_test_flag );
 
   // Main emulator execution loop
   emulator.loop();

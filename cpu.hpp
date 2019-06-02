@@ -1,7 +1,7 @@
 /*
  * Author:                  Emanuel Aracena
  * Date:                    May 27, 2019
- * Project (working) title: NES Emulator
+ * Project (working) title: MOS 6502 Emulator
  * Filename:                cpu.hpp
  * Description:             CPU interface.
  *                          **The MOS 6502 is a little-endian 8-bit processor.**
