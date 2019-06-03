@@ -180,11 +180,11 @@ class CPU {
   void op_ARR_();
   void op_XAA_();
   void op_AXS_();
-  void op_AHX_();
-  void op_SHY_();
-  void op_SHX_();
-  void op_TAS_();
-  void op_LAS_();
+  // void op_AHX_();
+  // void op_SHY_();
+  // void op_SHX_();
+  // void op_TAS_();
+  // void op_LAS_();
 
   // Special opcodes
   void op_KIL_();
