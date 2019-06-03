@@ -186,7 +186,7 @@ void CPU::decode_execute() {
 
 // Addressing modes implementation
 void CPU::addr_implied_() {
-  //... depends on opcode
+  //... depends on opcode, synonymous (within the context of this project) to accumulator mode
   current_addr_mode_ = "implied";
 }
 
@@ -241,6 +241,7 @@ void CPU::addr_absolute_y_() {
 void CPU::addr_indirect_() {
   current_addr_mode_ = "indirect";
   target_addr_ = (MEM_[PC_+3] << 8) | (MEM_[PC_+2]);
+  target_addr_ = (MEM_[target_addr_+1] << 8) | (MEM_[target_addr_]);
 }
 
 void CPU::addr_relative_() {
@@ -284,10 +285,7 @@ void CPU::op_ADC_() {
 
   // Set flags
   // C flag
-  if (old_carry_bit == 1)
-    P_ = P_ & new_carry_bit;
-  else
-    P_ = P_ | new_carry_bit;
+  P_ = (P_ & 0xFE) + new_carry_bit;
   // Z flag
   if (A_ == 0)
     P_ = P_ | 0x02;
@@ -370,10 +368,7 @@ void CPU::op_ASL_() {
 
   // Set flags as necessary
   // C flag
-  if((P_ & 0x01) == 1)
-    P_ = P_ & (0xFF - bit_7);
-  else
-    P_ = P_ | bit_7;
+  P_ = (P_ & 0xFE ) + bit_7;
 
   // Z flag
   if (current_addr_mode_ == "implied" && A_ == 0)
@@ -516,8 +511,8 @@ void CPU::op_BRK_() {
     cycles_to_emulate_ = 7;
 
   // Instruction function
-  MEM_[0x0100 | SP_] = PC_;
-  MEM_[0x0100 | ++SP_] = P_;
+  MEM_[0x0100 | SP_++] = PC_;
+  MEM_[0x0100 | SP_++] = P_;
 
   PC_ = MEM_[0xFFFE];   // Interrupt vector IRQ is at 0xFFFE/F
   P_ = P_ | 0x30;       // Set B flag to 1
@@ -642,73 +637,1002 @@ void CPU::op_CMP_() {
 }
 
 void CPU::op_CPX_() {
+  // Compare X
+  if (current_addr_mode_ == "immediate") 
+    cycles_to_emulate_ = 2;   
+  else if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 4;
+
+  // Instruction function
+  if (current_addr_mode_ == "immediate") {
+    if (X_ >= immediate_)
+      P_ = P_ | 0x01;
+    if (X_ == immediate_)
+      P_ = P_ | 0x02;
+    if ((((X_ - immediate_) & 0x80) >> 7) == 1)
+      P_ = P_ | 0x80;
+  } else {
+    if (X_ >= MEM_[target_addr_])
+      P_ = P_ | 0x01;
+    if (X_ == MEM_[target_addr_])
+      P_ = P_ | 0x02;
+    if ((((X_ - MEM_[target_addr_]) & 0x80) >> 7) == 1)
+      P_ = P_ | 0x80;   
+  }
+    
+
+  if ((current_addr_mode_ == "absolute"))
+    pc_offset_ = 3;
+  else
+    pc_offset_ = 2;
 
 }
 
 void CPU::op_CPY_() {
+  // Compare Y
+  if (current_addr_mode_ == "immediate") 
+    cycles_to_emulate_ = 2;   
+  else if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 4;
 
+  // Instruction function
+  if (current_addr_mode_ == "immediate") {
+    if (Y_ >= immediate_)
+      P_ = P_ | 0x01;
+    if (Y_ == immediate_)
+      P_ = P_ | 0x02;
+    if ((((Y_ - immediate_) & 0x80) >> 7) == 1)
+      P_ = P_ | 0x80;
+  } else {
+    if (Y_ >= MEM_[target_addr_])
+      P_ = P_ | 0x01;
+    if (Y_ == MEM_[target_addr_])
+      P_ = P_ | 0x02;
+    if ((((Y_ - MEM_[target_addr_]) & 0x80) >> 7) == 1)
+      P_ = P_ | 0x80;   
+  }
+    
+  if ((current_addr_mode_ == "absolute"))
+    pc_offset_ = 3;
+  else
+    pc_offset_ = 2;
 }
 
 void CPU::op_DEC_() {
+  // Decrement Memory
+  if (current_addr_mode_ == "zero page")
+    cycles_to_emulate_ = 5;
+  else if (current_addr_mode_ == "zero page x")
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "absolute")
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "absolute x")
+    cycles_to_emulate_ = 7;
+
+  // Instruction function
+
+  MEM_[target_addr_] = MEM_[target_addr_] - 1;
+  
+  // Set flags
+  // N flag
+  if (((MEM_[target_addr_] & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+
+  // Z flag
+  if (MEM_[target_addr_] == 0)
+    P_ = P_ | 0x02;
+
+  if ((current_addr_mode_ == "absolute") ||
+      (current_addr_mode_ == "absolute x"))
+    pc_offset_ = 3;
+  else
+    pc_offset_ = 2;
+}
+
+void CPU::op_DEX_() {
+  // Decrement X register
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  // Instruction function
+  X_ = X_ - 1;
+  
+  // Set flags
+  // N flag
+  if (((X_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+
+  // Z flag
+  if (X_ == 0)
+    P_ = P_ | 0x02;
+
+  if (current_addr_mode_ == "implied")
+    pc_offset_ = 2;
+}
+
+void CPU::op_DEY_() {
+  // Decrement Y register
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  // Instruction function
+  Y_ = Y_ - 1;
+  
+  // Set flags
+  // N flag
+  if (((Y_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+
+  // Z flag
+  if (Y_ == 0)
+    P_ = P_ | 0x02;
+
+  if (current_addr_mode_ == "implied")
+    pc_offset_ = 2;
+}
+
+void CPU::op_EOR_() {
+  // Exclusive OR
+  if (current_addr_mode_ == "immediate") 
+    cycles_to_emulate_ = 2;   
+  else if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "zero page x") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "izx") 
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "izy") 
+    cycles_to_emulate_ = 5;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute x") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute y") 
+    cycles_to_emulate_ = 4;
+
+  // Instruction function
+  A_ = A_ ^ MEM_[target_addr_];
+
+  // Set flags
+  // Z flag
+  if (A_ == 0)
+    P_ = P_ | 0x02;
+  
+  // N Flag
+  if (((A_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+
+  // PC increment
+  if ((current_addr_mode_ == "absolute")   ||
+      (current_addr_mode_ == "absolute x") ||
+      (current_addr_mode_ == "absolute y"))
+    pc_offset_ = 3;
+  else 
+    pc_offset_ = 2;
+}
+
+void CPU::op_INC_() {
+ // Decrement Memory
+  if (current_addr_mode_ == "zero page")
+    cycles_to_emulate_ = 5;
+  else if (current_addr_mode_ == "zero page x")
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "absolute")
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "absolute x")
+    cycles_to_emulate_ = 7;
+
+  // Instruction function
+  MEM_[target_addr_] = MEM_[target_addr_] + 1;
+  
+  // Set flags
+  // N flag
+  if (((MEM_[target_addr_] & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+
+  // Z flag
+  if (MEM_[target_addr_] == 0)
+    P_ = P_ | 0x02;
+
+  if ((current_addr_mode_ == "absolute") ||
+      (current_addr_mode_ == "absolute x"))
+    pc_offset_ = 3;
+  else
+    pc_offset_ = 2;
+}
+
+void CPU::op_INX_() {
+  // Increment X register
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  // Instruction function
+  X_ = X_ + 1;
+  
+  // Set flags
+  // N flag
+  if (((X_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+
+  // Z flag
+  if (X_ == 0)
+    P_ = P_ | 0x02;
+
+  if (current_addr_mode_ == "implied")
+    pc_offset_ = 2;
+}
+
+void CPU::op_INY_() {
+  // Increment Y register
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  // Instruction function
+  Y_ = Y_ - 1;
+  
+  // Set flags
+  // N flag
+  if (((Y_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+
+  // Z flag
+  if (Y_ == 0)
+    P_ = P_ | 0x02;
+
+  if (current_addr_mode_ == "implied")
+    pc_offset_ = 2;
+}
+
+void CPU::op_JMP_() {
+  // Jump
+  if (current_addr_mode_ == "absolute")
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "indirect")
+    cycles_to_emulate_ = 5;
+
+  // Instruction function
+  if  (current_addr_mode_ == "absolute") 
+    PC_ = target_addr_;
+  else if (current_addr_mode_ == "indirect") 
+    PC_ = target_addr_;
+  
+  pc_offset_ = 0;
+}
+
+void CPU::op_JSR_() {
+  // Jump to subroutine
+  if (current_addr_mode_ == "absolute")
+    cycles_to_emulate_ = 6;
+
+  MEM_[0x0100 | SP_++] = PC_ + 2;   // return address minus 1, 3 byte offset
+
+  // 
+  PC_ = target_addr_;
+
+  if (current_addr_mode_ == "absolute")
+    pc_offset_ = 0;
+}
+
+void CPU::op_LDA_() {
+  // Load accumalator
+  if (current_addr_mode_ == "immediate") 
+    cycles_to_emulate_ = 2;   
+  else if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "zero page x") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "izx") 
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "izy") 
+    cycles_to_emulate_ = 5;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute x") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute y") 
+    cycles_to_emulate_ = 4;
+
+  // Instruction function
+  if (current_addr_mode_ == "immediate")
+    A_ = immediate_;
+  else
+    A_ = MEM_[target_addr_];
+
+  // Set flags
+  // Z flag
+  if (A_ == 0)
+    P_ = P_ | 0x02;
+  // N flag
+  if (((A_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+  
+  // PC increment
+  if ((current_addr_mode_ == "absolute")   ||
+      (current_addr_mode_ == "absolute x") ||
+      (current_addr_mode_ == "absolute y"))
+    pc_offset_ = 3;
+  else 
+    pc_offset_ = 2;
+}
+
+void CPU::op_LDX_() {
+  // Load X register
+  if (current_addr_mode_ == "immediate") 
+    cycles_to_emulate_ = 2;   
+  else if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "zero page y")
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute y") 
+    cycles_to_emulate_ = 4;
+
+  // Instruction function
+  if (current_addr_mode_ == "immediate")
+    X_ = immediate_;
+  else
+    X_ = MEM_[target_addr_];
+
+  // Set flags
+  // Z flag
+  if (X_ == 0)
+    P_ = P_ | 0x02;
+  // N flag
+  if (((X_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+  
+  // PC increment
+  if ((current_addr_mode_ == "absolute")   ||
+      (current_addr_mode_ == "absolute y"))
+    pc_offset_ = 3;
+  else 
+    pc_offset_ = 2;
+}
+
+void CPU::op_LDY_() {
+  // Load Y register
+  if (current_addr_mode_ == "immediate") 
+    cycles_to_emulate_ = 2;   
+  else if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "zero page x")
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute x") 
+    cycles_to_emulate_ = 4;
+
+  // Instruction function
+  if (current_addr_mode_ == "immediate")
+    Y_ = immediate_;
+  else
+    Y_ = MEM_[target_addr_];
+
+  // Set flags
+  // Z flag
+  if (Y_ == 0)
+    P_ = P_ | 0x02;
+  // N flag
+  if (((Y_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+  
+  // PC increment
+  if ((current_addr_mode_ == "absolute")   ||
+      (current_addr_mode_ == "absolute x"))
+    pc_offset_ = 3;
+  else 
+    pc_offset_ = 2;
+}
+
+void CPU::op_LSR_() {
+  // Logical Shift Right
+  if (current_addr_mode_ == "implied") 
+    cycles_to_emulate_ = 2;   
+  else if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 5;
+  else if (current_addr_mode_ == "zero page x")
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "absolute x") 
+    cycles_to_emulate_ = 7;
+
+  uint8_t carry_bit = 0;
+  
+  // Instruction function
+  if (current_addr_mode_ == "implied") {
+    carry_bit = (A_ & 0x80) >> 7;
+    A_ = A_ << 1;
+    // Set flags
+    if (A_ == 0)
+      P_ = P_ | 0x02;
+    if (((A_ & 0x80) >> 7) == 1)
+      P_ = P_ | 0x80;
+  } else {
+    carry_bit = (MEM_[target_addr_] & 0x80) >> 7;
+    MEM_[target_addr_] = MEM_[target_addr_] << 1;
+
+    // Set flags
+    if (MEM_[target_addr_] == 0)
+      P_ = P_ | 0x02;
+    if (((MEM_[target_addr_] & 0x80) >> 7) == 1)
+      P_ = P_ | 0x80;
+  }
+
+  // C flag, set to old contents
+  P_ = (P_ & 0xFE) + carry_bit;
+  
+  // PC increment
+  if ((current_addr_mode_ == "absolute")   ||
+      (current_addr_mode_ == "absolute x"))
+    pc_offset_ = 3;
+  else 
+    pc_offset_ = 2;
+}
+
+void CPU::op_NOP_() {
+  // NOP, do nothing. Since some NOP instructions vary in
+  // cycles used, this serves as a way to delay the CPU
+  // or progress the PC
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  pc_offset_ = 1;
+}
+
+void CPU::op_ORA_() {
+  // Logical inclusive OR
+  if (current_addr_mode_ == "immediate") 
+    cycles_to_emulate_ = 2;   
+  else if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "zero page x") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "izx") 
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "izy") 
+    cycles_to_emulate_ = 5;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute x") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute y") 
+    cycles_to_emulate_ = 4;
+
+  // Instruction function
+  A_ = A_ | MEM_[target_addr_];
+
+  // Set flags
+  // Z flag
+  if (A_ == 0)
+    P_ = P_ | 0x02;
+  
+  // N Flag
+  if (((A_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+
+  // PC increment
+  if ((current_addr_mode_ == "absolute")   ||
+      (current_addr_mode_ == "absolute x") ||
+      (current_addr_mode_ == "absolute y"))
+    pc_offset_ = 3;
+  else 
+    pc_offset_ = 2;
+}
+
+void CPU::op_PHA_() {
+  // Push Accumulator
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 3;
+
+  MEM_[0x0100 | SP_++] = A_;
+  
+  pc_offset_ = 1;
+}
+
+void CPU::op_PHP_() {
+  // Push processor status
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 3;
+
+  MEM_[0x0100 | SP_++] = P_;
+  
+  pc_offset_ = 1;
+}
+
+void CPU::op_PLA_() {
+  // Pull Accumulator
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 4;
+
+  MEM_[0x0100 | SP_--] = A_;
+
+  // Set flags
+  // Z flag
+  if (A_ == 0)
+    P_ = P_ | 0x02;
+  // N flag
+  if (((A_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+  
+  pc_offset_ = 1;
+}
+
+void CPU::op_PLP_() {
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 4;
+
+  MEM_[0x0100 | SP_--] = P_;
+  
+  pc_offset_ = 1;
+}
+
+void CPU::op_ROL_() {
+  // Rotate Left
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+  else if (current_addr_mode_ == "zero page")
+    cycles_to_emulate_ = 5; 
+  else if (current_addr_mode_ == "zero page x")
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "absolute")
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "absolute x")
+    cycles_to_emulate_ = 7;
+
+  // Instruction function
+  uint8_t new_carry_bit;
+  uint8_t old_carry_bit = (P_ & 0x80) >> 7;
+  if (current_addr_mode_ == "implied") {
+    new_carry_bit = (A_ & 0x01);
+    A_ = (A_ << 1) + old_carry_bit;
+
+    // Z flag
+    if (A_ == 0)
+      P_ = P_ | 0x02;
+    // N flag
+    if (((A_ & 0x80) >> 7) == 1)
+      P_ = P_ | 0x80;
+    
+  } else {
+    new_carry_bit = (MEM_[target_addr_] & 0x01);
+    MEM_[target_addr_] = (MEM_[target_addr_] << 1) + old_carry_bit;
+
+    // Z flag
+    if (MEM_[target_addr_] == 0)
+      P_ = P_ | 0x02;
+    // N flag
+    if (((MEM_[target_addr_] & 0x80) >> 7) == 1)
+      P_ = P_ | 0x80;
+    
+  }
+    
+  // C flag
+  P_ = (P_ & 0xFE) + new_carry_bit;
+  
+  if ((current_addr_mode_ == "absolute") ||
+      (current_addr_mode_ == "absolute x"))
+    pc_offset_ = 3;
+  else
+    pc_offset_ = 2;
+}
+
+void CPU::op_ROR_() {
+ // Rotate Right
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+  else if (current_addr_mode_ == "zero page")
+    cycles_to_emulate_ = 5; 
+  else if (current_addr_mode_ == "zero page x")
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "absolute")
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "absolute x")
+    cycles_to_emulate_ = 7;
+
+  // Instruction function
+  uint8_t new_carry_bit;
+  uint8_t old_carry_bit = (P_ & 0x80) >> 7;
+  if (current_addr_mode_ == "implied") {
+    new_carry_bit = (A_ & 0x01);
+    A_ = (A_ >> 1) + (old_carry_bit << 7);
+
+    // Z flag
+    if (A_ == 0)
+      P_ = P_ | 0x02;
+    // N flag
+    if (((A_ & 0x80) >> 7) == 1)
+      P_ = P_ | 0x80;
+    
+  } else {
+    new_carry_bit = (MEM_[target_addr_] & 0x01);
+    MEM_[target_addr_] = (MEM_[target_addr_] >> 1) + (old_carry_bit << 7);
+
+    // Z flag
+    if (MEM_[target_addr_] == 0)
+      P_ = P_ | 0x02;
+    // N flag
+    if (((MEM_[target_addr_] & 0x80) >> 7) == 1)
+      P_ = P_ | 0x80;
+    
+  }
+    
+  // C flag
+  P_ = (P_ & 0xFE) + new_carry_bit;
+  
+  if ((current_addr_mode_ == "absolute") ||
+      (current_addr_mode_ == "absolute x"))
+    pc_offset_ = 3;
+  else
+    pc_offset_ = 2;
+}
+
+void CPU::op_RTI_() {
+  // Return from Interrupt
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 6;
+
+  P_ = MEM_[0x0100 | SP_--];
+  PC_ = MEM_[0x0100 | SP_--];
+
+  pc_offset_ = 1;
+}
+
+void CPU::op_RTS_() {
+  // Return from Subroutine
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 6;
+
+  PC_ = MEM_[0x0100 | SP_--];
+  
+  pc_offset_ = 1;
+}
+
+void CPU::op_SBC_() {
+  // Subtract with Carry
+  if (current_addr_mode_ == "immediate") 
+    cycles_to_emulate_ = 2;   
+  else if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "zero page x") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "izx") 
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "izy") 
+    cycles_to_emulate_ = 5;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute x") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute y") 
+    cycles_to_emulate_ = 4;
+  
+
+  uint8_t value_to_add = MEM_[target_addr_];
+  uint8_t old_carry_bit = P_ & 0x01;
+  uint8_t new_carry_bit = 0x00;
+  if ((A_ - value_to_add - (1 - old_carry_bit)) > 0xFF)
+    new_carry_bit = 0x01;
+  
+  // Instruction function
+  A_ = A_ - value_to_add - (1 - old_carry_bit);
+
+  // Set flags
+  // C flag
+  P_ = (P_ & 0xFE) + new_carry_bit;
+  
+  // Z flag
+  if (A_ == 0)
+    P_ = P_ | 0x02;
+  
+  // N flag
+  if (((A_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+  
+  // V flags
+  P_ = (P_ & (0xFF -0x40)) + (new_carry_bit << 6);
+  
+  // PC increment
+  if ((current_addr_mode_ == "absolute")   ||
+      (current_addr_mode_ == "absolute x") ||
+      (current_addr_mode_ == "absolute y"))
+    pc_offset_ = 3;
+  else 
+    pc_offset_ = 2;
+}
+
+void CPU::op_SEC_() {
+  // Set Carry Flag
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  P_ = P_ | 0x01;
+  
+  pc_offset_ = 1;
+}
+
+void CPU::op_SED_() {
+  // Set decimal flag
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  P_ = P_ | 0x08;
+  
+  pc_offset_ = 1;
+}
+
+void CPU::op_SEI_() {
+  // Set Interrupt disable
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  P_ = P_ | 0x04;
+  
+  pc_offset_ = 1; 
+}
+
+void CPU::op_STA_() {
+  // Store accumulator
+  if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "zero page x") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "izx") 
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "izy") 
+    cycles_to_emulate_ = 6;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute x") 
+    cycles_to_emulate_ = 5;
+  else if (current_addr_mode_ == "absolute y") 
+    cycles_to_emulate_ = 5;
+
+  // Instruction main function
+  MEM_[target_addr_] = A_;
+
+  if ((current_addr_mode_ == "absolute") ||
+      (current_addr_mode_ == "absolute x") ||
+      (current_addr_mode_ == "absolute y"))
+    pc_offset_ = 3;
+  else
+    pc_offset_ = 2;
+}
+
+void CPU::op_STX_() {
+  // Store X register
+  if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "zero page y") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 4;
+
+  // Instruction main function
+  MEM_[target_addr_] = X_;
+
+  if (current_addr_mode_ == "absolute")
+    pc_offset_ = 3;
+  else
+    pc_offset_ = 2;
+}
+
+void CPU::op_STY_() {
+  // Store Y register
+  if (current_addr_mode_ == "zero page") 
+    cycles_to_emulate_ = 3;
+  else if (current_addr_mode_ == "zero page y") 
+    cycles_to_emulate_ = 4;
+  else if (current_addr_mode_ == "absolute") 
+    cycles_to_emulate_ = 4;
+
+  // Instruction main function
+  MEM_[target_addr_] = Y_;
+
+  if (current_addr_mode_ == "absolute")
+    pc_offset_ = 3;
+  else
+    pc_offset_ = 2;
+}
+
+void CPU::op_TAX_() {
+  // Transfer accumulator to X
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  // Instruction function
+  X_ = A_;
+
+  // Set flags
+  // Z flags
+  if (X_ == 0)
+    P_ = P_ | 0x02;
+  // N flag
+  if (((X_ & 0x80) >>7) == 1)
+    P_ = P_ | 0x80;
+  
+  pc_offset_ = 1;
+}
+
+void CPU::op_TAY_() {
+  // Transfer accumulator to Y
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  // Instruction function
+  Y_ = A_;
+  // Set flags
+  // Z flags
+  if (Y_ == 0)
+    P_ = P_ | 0x02;
+  // N flag
+  if (((Y_ & 0x80) >>7) == 1)
+    P_ = P_ | 0x80;
+   
+  pc_offset_ = 1;
+}
+
+void CPU::op_TSX_() {
+  // Transfer stack pointer to X
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  // Instruction function
+  X_ = SP_;
+  // Set flags
+  // Z flags
+  if (X_ == 0)
+    P_ = P_ | 0x02;
+  // N flag
+  if (((X_ & 0x80) >>7) == 1)
+    P_ = P_ | 0x80;
+  
+  pc_offset_ = 1;
+}
+
+void CPU::op_TXA_() {
+  // Transfer X to Accumulator
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  // Instruction function
+  A_ = X_;
+  
+  // Set flags
+  // Z flags
+  if (A_ == 0)
+    P_ = P_ | 0x02;
+  // N flag
+  if (((A_ & 0x80) >>7) == 1)
+    P_ = P_ | 0x80;
+  
+  pc_offset_ = 1;
+}
+
+void CPU::op_TXS_() {
+  // Transfer X to Stack pointer
+   if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  // Instruction function
+  SP_ = X_;
+ 
+  pc_offset_ = 1; 
+}
+
+void CPU::op_TYA_(){
+  // Transfer Y to Accumulator
+  if (current_addr_mode_ == "implied")
+    cycles_to_emulate_ = 2;
+
+  // Instruction function
+  A_ = Y_;
+  
+  // Set flags
+  // Z flags
+  if (A_ == 0)
+    P_ = P_ | 0x02;
+  // N flag
+  if (((A_ & 0x80) >>7) == 1)
+    P_ = P_ | 0x80;
+  
+  pc_offset_ = 1;
+}
+
+// Unofficial opcodes
+void CPU::op_SLO_(){
+  op_ASL_();
+  op_ORA_();
 
 }
 
-void CPU::op_DEX_(){}
-void CPU::op_DEY_(){}
-void CPU::op_EOR_(){}
-void CPU::op_INC_(){}
-void CPU::op_INX_(){}
-void CPU::op_INY_(){}
-void CPU::op_JMP_(){}
-void CPU::op_JSR_(){}
-void CPU::op_LDA_(){}
-void CPU::op_LDX_(){}
-void CPU::op_LDY_(){}
-void CPU::op_LSR_(){}
-void CPU::op_NOP_(){}
-void CPU::op_ORA_(){}
-void CPU::op_PHA_(){}
-void CPU::op_PHP_(){}
-void CPU::op_PLA_(){}
-void CPU::op_PLP_(){}
-void CPU::op_ROL_(){}
-void CPU::op_ROR_(){}
-void CPU::op_RTI_(){}
-void CPU::op_RTS_(){}
-void CPU::op_SBC_(){}
-void CPU::op_SEC_(){}
-void CPU::op_SED_(){}
-void CPU::op_SEI_(){}
-void CPU::op_STA_(){}
-void CPU::op_STX_(){}
-void CPU::op_STY_(){}
-void CPU::op_TAX_(){}
-void CPU::op_TAY_(){}
-void CPU::op_TSX_(){}
-void CPU::op_TXA_(){}
-void CPU::op_TXS_(){}
-void CPU::op_TYA_(){}
+void CPU::op_RLA_(){
 
-// Unofficial opcodes
-void CPU::op_SLO_(){}
-void CPU::op_RLA_(){}
-void CPU::op_SRE_(){}
-void CPU::op_RRA_(){}
-void CPU::op_SAX_(){}
-void CPU::op_LAX_(){}
-void CPU::op_DCP_(){}
-void CPU::op_ISC_(){}
-void CPU::op_ANC_(){}
-void CPU::op_ALR_(){}
-void CPU::op_ARR_(){}
-void CPU::op_XAA_(){}
-void CPU::op_AXS_(){}
-void CPU::op_AHX_(){}
-void CPU::op_SHY_(){}
-void CPU::op_SHX_(){}
-void CPU::op_TAS_(){}
-void CPU::op_LAS_(){}
+  op_ROL_();
+  op_AND_();
+  
+}
+
+void CPU::op_SRE_(){
+  op_ROR_();
+  op_EOR_();
+}
+
+void CPU::op_RRA_(){
+  op_ROR_();
+  op_AND_();
+}
+
+void CPU::op_SAX_(){
+  // mem[target_addr_] = A_ & X_
+}
+
+void CPU::op_LAX_(){
+  // A,X = mem[target_addr_]
+
+}
+
+void CPU::op_DCP_(){
+  // mem[target_addr_] = mem[target_addr_] - 1
+  // A = A - mem[target_addr_]
+}
+
+void CPU::op_ISC_(){
+  // mem[target_addr_] = mem[target_addr_] + 1
+  // A = A - mem[target_addr_]
+}
+
+void CPU::op_ANC_(){
+  // A = A & immediate
+}
+
+void CPU::op_ALR_(){
+  // A = (A & immediate) >> 1
+}
+
+void CPU::op_ARR_(){
+  // A = (A & immediate) >> 1
+  // difference between ARR and ALR is the flags set
+}
+
+
+void CPU::op_XAA_(){
+  // A = X & immediate
+}
+
+void CPU::op_AXS_(){
+  // A = (A & X) - immediate
+}
+
+void CPU::op_AHX_(){
+  // mem[target_addr_] = A & X & H(?)
+}
+
+void CPU::op_SHY_(){
+  // mem[target_addr_] = Y & H(?)
+}
+
+void CPU::op_SHX_(){
+  // mem[target_addr_] = X & H
+}
+
+void CPU::op_TAS_(){
+  // SP = A & X
+  // mem[target_addr_] = SP & H(?)
+}
+
+void CPU::op_LAS_(){
+  // A,X,SP = mem[target_addr_] & SP
+}
 
 // Special opcodes
-void CPU::op_KIL_() {}
+void CPU::op_KIL_() {
+  // Jam the machine, will stop the machines execution loop
+  // running = false;
+}
 
