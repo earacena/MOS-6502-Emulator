@@ -15,11 +15,12 @@
 // Component headers
 #include "cpu.hpp"
 
+// Debug headers
+#include "logger.hpp"
+
 class Emulator {
 public:
-  Emulator( const std::string & filename,  
-            const uint8_t & debug_flag,        // Will set flag to output debug info
-            const uint8_t & unit_test_flag);   // Will set flag for running all written unit tests
+  Emulator( const std::string & filename, const uint8_t & debug_flag);
 
   void loop();  // Main emulation loop
 
@@ -28,8 +29,12 @@ public:
   uint8_t debug_flag_;
   uint8_t unit_test_flag_;
 
+  // Debug
+  Logger logger_;
+  
   // Components
   CPU cpu_;
+  uint8_t cpu_running_;
   
 };
 

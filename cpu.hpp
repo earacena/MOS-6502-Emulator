@@ -10,19 +10,25 @@
 #ifndef CPU_HPP
 #define CPU_HPP
 
+#include <iostream>
 #include <vector>
 #include <cinttypes>
 #include <chrono>
 #include <thread>
 #include <functional>
 #include <unordered_map>
+#include <fstream>
 
 class CPU {
+  friend class Logger;
+  
  public:
   // Initialization
   CPU();
-  void powerup();              // power-up state
-
+  void initialize();
+  void powerup();                               // power-up state
+  void load_file(const std::string & filename); // Load file into memory
+  
   // CPU emulation
   void emulate();              // single fetch, decode, execute loop
 
@@ -33,7 +39,7 @@ class CPU {
   
   // Memory, 0000-FFFF map
   // RANGE       |  SIZE  |  Device
-  // $0000-$07FF   $0800    2KB internal RAM
+  // $0000-$07FF   $0800      2KB internal RAM
   // $0800-$0FFF   $0800    ]
   // $1000-$17FF   $0800    ] Mirriors of $0000-$07FF
   // $1800-$1FFF   $0800    ]
@@ -73,7 +79,6 @@ class CPU {
   
   // Opcode
   uint16_t opcode_;
-  std::unordered_map<uint8_t, std::function<void()>> addr_modes_;
   std::unordered_map<uint8_t, std::function<void()>> opcode_table_;
   std::string current_addr_mode_;
   uint16_t target_addr_;
@@ -180,11 +185,11 @@ class CPU {
   void op_ARR_();
   void op_XAA_();
   void op_AXS_();
-  // void op_AHX_();
-  // void op_SHY_();
-  // void op_SHX_();
-  // void op_TAS_();
-  // void op_LAS_();
+  void op_AHX_();
+  void op_SHY_();
+  void op_SHX_();
+  void op_TAS_();
+  void op_LAS_();
 
   // Special opcodes
   void op_KIL_();

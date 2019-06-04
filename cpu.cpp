@@ -9,10 +9,20 @@
 #include "cpu.hpp"
 
 CPU::CPU() {
-  cycle_time_ = std::chrono::nanoseconds(513);
+  
+}
+
+void CPU::initialize() {
+ cycle_time_ = std::chrono::nanoseconds(513);
   MEM_.resize(65536, 0);
 
-  addr_modes_ = {
+  // default offset
+  //pc_offset_ = 2;
+
+  // Standard ROM start location
+  //  PC_ = 0x8000;
+  
+  opcode_table_ = {
     { 0x00, [this]{ addr_implied_(); op_BRK_();}},     { 0x01 ,[this]{ addr_izx_(); op_ORA_();}},
     { 0x02, [this]{ addr_implied_(); op_KIL_(); }},    { 0x03 ,[this]{ addr_izx_(); op_SLO_();}},
     { 0x04, [this]{ addr_zero_page_(); op_NOP_();}},   { 0x05 ,[this]{ addr_zero_page_(); op_ORA_();}},
@@ -142,20 +152,32 @@ CPU::CPU() {
     { 0xFC, [this]{ addr_absolute_x_(); op_NOP_();}},  { 0xFD ,[this]{ addr_absolute_x_(); op_SBC_();}},
     { 0xFE, [this]{ addr_absolute_x_(); op_INC_();}},  { 0xFF ,[this]{ addr_absolute_x_(); op_ISC_();}},
   };
-  
+
+
 }
 void CPU::powerup() {
-  // Clear memory since it cannot be relied on
-  for (uint32_t position = static_cast<uint32_t>(0x0000); position <= 0xFFFF; ++position)
-    MEM_[position] = 0x00;
-
   P_  = 0x34;
   A_  = 0x0;
   X_  = 0x0;
   Y_  = 0x0;
   SP_ = 0xFD;
-  PC_ = 0x4020;
+  PC_ = 0x8010;
   // LFSR = 0x0000
+}
+
+void CPU::load_file(const std::string & filename) {
+  std::ifstream file(filename, std::ios::binary);
+
+  if (file) {
+    //    file.seekg(0, std::ios::end);
+    char buffer[50000]; 
+    file.seekg(0, std::ios::beg);
+    file.read(&buffer[0], 50000);
+    file.close();
+
+    for (uint64_t counter = 0; counter <= (0xFFFF-0x8000); ++counter)
+      MEM_[counter + 0x8000] = buffer[counter];
+  }
 }
 
 void CPU::emulate() {
@@ -176,6 +198,7 @@ void CPU::fetch() {
 }
 
 void CPU::decode_execute() {
+  pc_offset_ = 2; // Keep it moving if opcode is invalid or doesnt progress
   exec_start_time_ = std::chrono::steady_clock::now();
   opcode_table_[opcode_]();
   PC_ += pc_offset_;
@@ -1692,7 +1715,7 @@ void CPU::op_LAX_(){
 void CPU::op_DCP_(){
   // mem[target_addr_] = mem[target_addr_] - 1
   // A = A - mem[target_addr_]
-    if (current_addr_mode_ == "zero page")
+  if (current_addr_mode_ == "zero page")
     cycles_to_emulate_ = 5;
   else if (current_addr_mode_ == "zero page x")
     cycles_to_emulate_ = 6;
@@ -1707,26 +1730,26 @@ void CPU::op_DCP_(){
   else if (current_addr_mode_ == "absolute y")
     cycles_to_emulate_ = 7;
 
-    // Instruction function
-    MEM_[target_addr_] = MEM_[target_addr_] - 1;
-    A_ = A_ - MEM_[target_addr_];
-
-    // Set flags
-    // C Flag (?)
-    // N flag
-    if (((A_ & 0x80) >> 7) == 1)
-      P_ = P_ | 0x80;
-    // Z flag
-    if (A_ == 0)
-      P_ = P_ | 0x02;
+  // Instruction function
+  MEM_[target_addr_] = MEM_[target_addr_] - 1;
+  A_ = A_ - MEM_[target_addr_];
+  
+  // Set flags
+  // C Flag (?)
+  // N flag
+  if (((A_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+  // Z flag
+  if (A_ == 0)
+    P_ = P_ | 0x02;
 
     
-    if ((current_addr_mode_ == "absolute") ||
-        (current_addr_mode_ == "absolute x") ||
-        (current_addr_mode_ == "absolute y"))
-      pc_offset_ = 3;
-    else
-      pc_offset_ = 2;
+  if ((current_addr_mode_ == "absolute") ||
+      (current_addr_mode_ == "absolute x") ||
+      (current_addr_mode_ == "absolute y"))
+    pc_offset_ = 3;
+  else
+    pc_offset_ = 2;
 }
 
 void CPU::op_ISC_(){
@@ -1747,25 +1770,25 @@ void CPU::op_ISC_(){
   else if (current_addr_mode_ == "absolute y")
     cycles_to_emulate_ = 7;
 
-    // Instruction function
-    MEM_[target_addr_] = MEM_[target_addr_] + 1;
-    A_ = A_ - MEM_[target_addr_];
+  // Instruction function
+  MEM_[target_addr_] = MEM_[target_addr_] + 1;
+  A_ = A_ - MEM_[target_addr_];
 
-    // Set flags
-    // C Flag (?)
-    // N flag
-    if (((A_ & 0x80) >> 7) == 1)
-      P_ = P_ | 0x80;
-    // Z flag
-    if (A_ == 0)
-      P_ = P_ | 0x02;
+  // Set flags
+  // C Flag (?)
+  // N flag
+  if (((A_ & 0x80) >> 7) == 1)
+    P_ = P_ | 0x80;
+  // Z flag
+  if (A_ == 0)
+    P_ = P_ | 0x02;
     
-    if ((current_addr_mode_ == "absolute") ||
-        (current_addr_mode_ == "absolute x") ||
-        (current_addr_mode_ == "absolute y"))
-      pc_offset_ = 3;
-    else
-      pc_offset_ = 2;
+  if ((current_addr_mode_ == "absolute") ||
+      (current_addr_mode_ == "absolute x") ||
+      (current_addr_mode_ == "absolute y"))
+    pc_offset_ = 3;
+  else
+    pc_offset_ = 2;
 }
 
 void CPU::op_ANC_(){
@@ -1862,30 +1885,41 @@ void CPU::op_AXS_(){
 }
 
 //// These use H, unknown what this means yet
-// void CPU::op_AHX_(){
-//   // mem[target_addr_] = A & X & H(?)
-// }
+void CPU::op_AHX_(){
+  // mem[target_addr_] = A & X & H(?)
+  pc_offset_ = 2;
+}
 
-// void CPU::op_SHY_(){
-//   // mem[target_addr_] = Y & H(?)
-// }
+void CPU::op_SHY_(){
+  // mem[target_addr_] = Y & H(?)
+  pc_offset_ = 2;
+}
 
-// void CPU::op_SHX_(){
-//   // mem[target_addr_] = X & H
-// }
+void CPU::op_SHX_(){
+  // mem[target_addr_] = X & H
+    pc_offset_ = 2;
+}
 
-// void CPU::op_TAS_(){
-//   // SP = A & X
-//   // mem[target_addr_] = SP & H(?)
-// }
+void CPU::op_TAS_(){
+  // SP = A & X
+  // mem[target_addr_] = SP & H(?)
 
-// void CPU::op_LAS_(){
-//   // A,X,SP = mem[target_addr_] & SP
-// }
+
+   pc_offset_ = 2; 
+}
+
+void CPU::op_LAS_(){
+  // A,X,SP = mem[target_addr_] & SP
+
+    pc_offset_ = 2;
+}
 
 // Special opcodes
 void CPU::op_KIL_() {
   // Jam the machine, will stop the machines execution loop
   // running = false;
+
+  std::cout << "\n\n\n\nJAM\n\n\n\n";
+  pc_offset_ = 2;
 }
 

@@ -1,0 +1,31 @@
+Name:		Emanuel Aracena
+Project:	MOS 6502 Emulator
+Date Started:   May 27, 2018
+
+Description:
+	An emulator of the MOS-6502 chip written in C++.
+	
+Platforms:
+	Linux 32/64-bit distributions
+		
+Dependencies:
+	g++ (compiler)
+	make (for the Makefile)
+	SFML 2.5.0 (and up) for window and 2D rendering functions.
+
+Build Instructions:
+      To build, type:
+            make clean	
+      	    make
+
+Run instructions (using FILE as the name of file):
+    To run with selected FILE, type:
+        ./6502-emu ROM --debug     (currently, only debug mode is allowed)
+
+Clean up:
+      To remove all .o and compiled executables, type:
+            make clean
+
+
+Issues:
+	* To be updated when most/all components have been implemented 
