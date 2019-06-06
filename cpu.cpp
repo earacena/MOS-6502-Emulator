@@ -13,12 +13,14 @@ CPU::CPU() {
 }
 
 void CPU::initialize() {
- cycle_time_ = std::chrono::nanoseconds(513);
+  cycle_time_ = std::chrono::nanoseconds(513);
   MEM_.resize(65536, 0);
 
+  cpu_running_ = 0x01;
+  
   // default offset
   //pc_offset_ = 2;
-
+  //P_ = 0x00;
   // Standard ROM start location
   //  PC_ = 0x8000;
   
@@ -161,7 +163,7 @@ void CPU::powerup() {
   X_  = 0x0;
   Y_  = 0x0;
   SP_ = 0xFD;
-  PC_ = 0x8010;
+  PC_ = 0x8000;
   // LFSR = 0x0000
 }
 
@@ -198,7 +200,6 @@ void CPU::fetch() {
 }
 
 void CPU::decode_execute() {
-  pc_offset_ = 2; // Keep it moving if opcode is invalid or doesnt progress
   exec_start_time_ = std::chrono::steady_clock::now();
   opcode_table_[opcode_]();
   PC_ += pc_offset_;
@@ -521,7 +522,7 @@ void CPU::op_BPL_() {
   
   // Instruction function
   if (((P_ & 0x80) >> 7) == 0) {
-    PC_ += immediate_;
+    PC_ += (uint16_t) immediate_;
     pc_offset_ = 0;
   } else {
     pc_offset_ = 2;
@@ -1920,6 +1921,7 @@ void CPU::op_KIL_() {
   // running = false;
 
   std::cout << "\n\n\n\nJAM\n\n\n\n";
+  cpu_running_ = 0x00;
   pc_offset_ = 2;
 }
 

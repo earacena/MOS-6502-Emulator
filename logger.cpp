@@ -12,12 +12,12 @@
 Logger::Logger() { /* ... */  }
 
 void Logger::show_CPU_emulation_result(const CPU & cpu) {
-  std::cout << "        [addr mode: " << cpu.current_addr_mode_ << " ] "
+  std::cout << "\nPC: 0x" << std::hex << std::uppercase << (uint16_t) cpu.PC_ - cpu.pc_offset_;
+  std::cout << "  OPCODE:: 0x" << std::hex << std::uppercase << cpu.opcode_;
+  std::cout << "\t[addr mode: " << cpu.current_addr_mode_ << " ] "
             << "[target addr: " << cpu.target_addr_ << "] "
             << "[immediate: 0x" << std::hex << std:: uppercase << (uint16_t) cpu.immediate_ << "] ";
   std::cout << "[PC offset: " << (uint16_t) cpu.pc_offset_ << "]";
-  std::cout << "\nPC: 0x" << std::hex << std::uppercase << (uint16_t) cpu.PC_;
-  std::cout << "  OPCODE:: 0x" << std::hex << std::uppercase << cpu.opcode_;
 }
 
 void Logger::save_snapshot_of_ram(const CPU & cpu) {

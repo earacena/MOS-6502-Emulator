@@ -14,6 +14,7 @@
 
 // Component headers
 #include "cpu.hpp"
+#include "rom.hpp"
 
 // Debug headers
 #include "logger.hpp"
@@ -34,7 +35,6 @@ public:
   
   // Components
   CPU cpu_;
-  uint8_t cpu_running_;
   
 };
 

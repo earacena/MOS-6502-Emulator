@@ -33,6 +33,7 @@ class CPU {
   void emulate();              // single fetch, decode, execute loop
 
  private:
+  uint8_t cpu_running_;
   void emulate_cycle_timing(); // Attempt to accurately emulate cycle timings (513~ ns per CPU cycle)
   void fetch();                // fetch next instruction
   void decode_execute();       // Look for opcode function, execute, update program counter

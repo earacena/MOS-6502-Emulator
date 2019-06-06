@@ -11,7 +11,8 @@ Platforms:
 Dependencies:
 	g++ (compiler)
 	make (for the Makefile)
-	SFML 2.5.0 (and up) for window and 2D rendering functions.
+	SDL 2.0.9 (or current version)
+	Dear ImGui
 
 Build Instructions:
       To build, type:
