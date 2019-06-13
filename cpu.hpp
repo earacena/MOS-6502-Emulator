@@ -20,6 +20,7 @@
 #include <fstream>
 
 class CPU {
+  friend class Emulator;
   friend class Logger;
   
  public:

@@ -12,12 +12,15 @@
 #include <cinttypes>
 #include <string>
 
+
 // Component headers
 #include "cpu.hpp"
 #include "rom.hpp"
 
 // Debug headers
 #include "logger.hpp"
+
+#include "gui.cpp"
 
 class Emulator {
 public:
@@ -30,6 +33,9 @@ public:
   uint8_t debug_flag_;
   uint8_t unit_test_flag_;
 
+  // Emulator
+  GUI gui_;
+  
   // Debug
   Logger logger_;
   

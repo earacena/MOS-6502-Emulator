@@ -27,10 +27,13 @@ void Emulator::loop() {
   if (debug_flag_ == 1)
     logger_.save_snapshot_of_ram(cpu_);
   
+  // GUI loop
   while (cpu_.cpu_running_ == 0x01) {
+
+    
     // Emulate CPU 
     cpu_.emulate();
-    // Debug
+    // Debug out put
     if (debug_flag_ == 1) { 
       logger_.show_CPU_emulation_result(cpu_);
       //logger_.show_PPU_emulation_result();
