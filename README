@@ -21,7 +21,7 @@ Build Instructions:
 
 Run instructions (using FILE as the name of file):
     To run with selected FILE, type:
-        ./6502-emu ROM --debug     (currently, only debug mode is allowed)
+        ./6502-emu FILE --debug     (currently, only debug mode is allowed)
 
 Clean up:
       To remove all .o and compiled executables, type:
