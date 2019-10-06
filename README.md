@@ -4,10 +4,6 @@
 ### Author
 Emanuel Aracena
 
-
-### Date Started   
-May 27, 2019
-
 ## Description
 An emulator of the MOS-6502 chip written in C++.
 	
