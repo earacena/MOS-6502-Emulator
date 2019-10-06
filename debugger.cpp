@@ -1,3 +1,14 @@
+/*
+    
+
+
+
+
+
+
+
+*/
+
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -15,7 +26,7 @@
 #include <thread>
 #include <chrono>
 
-#define SOCK_PATH "./emulator_comm_socket"
+#define SOCK_PATH "./emulator_socket"
 
 int main() {
   int sock, length;
@@ -34,7 +45,7 @@ int main() {
   strcpy(remote.sun_path, SOCK_PATH);
   length = strlen(remote.sun_path) + sizeof(remote.sun_family);
   if (connect(sock, (struct sockaddr *)&remote, length) == -1) {
-    perror("connect");
+    perror("connect(PATH: emulator_socket)");
     exit(1);
   }
 

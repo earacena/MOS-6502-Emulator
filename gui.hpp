@@ -21,7 +21,7 @@ class GUI {
 
  public:
   GUI();
-  uint8_t initialize();
+  void initialize();
   void show_logger_window();
   void cleanup();
   
