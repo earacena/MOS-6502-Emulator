@@ -6,13 +6,13 @@
  * Description:             Logger interface
  */
 
+#ifndef LOGGER_HPP
+#define LOGGER_HPP
+
 #include <iostream>
 #include <fstream>
 
 #include "cpu.hpp"
-
-#ifndef LOGGER_HPP
-#define LOGGER_HPP
 
 class Logger {
  public:

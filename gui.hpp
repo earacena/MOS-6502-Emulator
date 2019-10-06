@@ -12,13 +12,12 @@
 
 #include <iostream>
 
-#include "SDL2/SDL.h"
-#include "imgui/imgui.h"
+#include "SFML/Graphics.hpp"
 
 
 class GUI {
-  friend class Logger;
-  friend class Emulator;
+  // friend class Logger;
+  // friend class Emulator;
 
  public:
   GUI();
@@ -27,8 +26,10 @@ class GUI {
   void cleanup();
   
  private:
-  SDL_Window   * window_;
-  SDL_Renderer * renderer_;
+  //SDL_Window   * window_;
+  sf::RenderWindow window_;
+
+  //SDL_Renderer * renderer_;
   
 };
 

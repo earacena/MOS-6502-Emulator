@@ -1,8 +1,8 @@
 ###########################################################
-# 	Makefile for MOS 6502 Emulator Project		  #
-# 	Name: 		Emanuel Aracena			  #
-#	Date created:	June 3, 2019			  #
-#	Description:	Makefile for Linux executable.	  #
+# 	Makefile for MOS 6502 Emulator Project                #
+# 	Name: 		Emanuel Aracena			                        #
+#	  Date created:	June 3, 2019			                      #
+#	  Description:	Makefile for Linux executable.	        #
 ###########################################################
 
 # Flags
@@ -24,8 +24,8 @@ SFML_LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 # Libraries
 LIBS = -L/usr/lib -L/usr/local/lib $(SFML_LIBS)
 
-# Optimal multiplications
-OBJ_0 = main.o cpu.o logger.o emulator.o
+# Main recipe
+OBJ_0 = main.o cpu.o emulator.o logger.o gui.o
 PROGRAM_0 = 6502-emu
 $(PROGRAM_0): $(OBJ_0)
 	g++ $(CPP_FLAG) -o $(EXEC_DIR)/$@ $(OBJ_0) $(INCLUDE) $(LIBS)
@@ -36,7 +36,7 @@ all:
 	make $(PROGRAM_0)
 
 run:
-	./$(PROGRAM_0)
+	./$(PROGRAM_0) 
 
 clean:
 	(rm -f *.o; rm -f $(PROGRAM_0);)

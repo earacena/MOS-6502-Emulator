@@ -20,7 +20,7 @@
 // Debug headers
 #include "logger.hpp"
 
-#include "gui.cpp"
+#include "gui.hpp"
 
 class Emulator {
 public:
