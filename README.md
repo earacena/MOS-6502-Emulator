@@ -2,7 +2,7 @@
 # MOS 6502 Emulator
 
 ### Author
-Emanuel Aracena
+Emanuel Aracena Beriguete
 
 ## Description
 An emulator of the MOS-6502 processor written in C++.
