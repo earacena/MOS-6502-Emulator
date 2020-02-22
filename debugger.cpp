@@ -1,12 +1,5 @@
 /*
-    
-
-
-
-
-
-
-
+    Author : Emanuel Aracena Beriguete
 */
 
 #include <iostream>
