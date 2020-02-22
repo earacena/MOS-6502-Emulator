@@ -1,5 +1,5 @@
 /*
- * Author:                  Emanuel Aracena
+ * Author:                  Emanuel Aracena Beriguete
  * Date created:            May 27, 2019
  * Project (working) title: MOS 6502 Emulator
  * Filename:                main.cpp
