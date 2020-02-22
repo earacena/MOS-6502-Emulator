@@ -1,8 +1,8 @@
 ###########################################################
-# 	Makefile for MOS 6502 Emulator Project                #
-# 	Name: 		Emanuel Aracena			                        #
-#	  Date created:	June 3, 2019			                      #
-#	  Description:	Makefile for Linux executable.	        #
+# 	Makefile for MOS 6502 Emulator Project             #
+# 	Name: 		Emanuel Aracena Beriguete          #
+#	  Date created:	June 3, 2019			   #
+#	  Description:	Makefile for Linux executable.	   #
 ###########################################################
 
 # Flags
